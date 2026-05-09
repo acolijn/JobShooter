@@ -157,8 +157,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   tickAI(time: number, delta: number, targetX: number, targetY: number): void {
     if (!this.active) return;
 
-    const aimX = targetX + Math.cos(this.offsetAngle) * this.offsetRadius;
-    const aimY = targetY + Math.sin(this.offsetAngle) * this.offsetRadius;
+    const distToPlayer = Math.hypot(targetX - this.x, targetY - this.y) || 1;
+    const offsetScale = Phaser.Math.Clamp((distToPlayer - 60) / 200, 0, 1);
+    const aimX = targetX + Math.cos(this.offsetAngle) * this.offsetRadius * offsetScale;
+    const aimY = targetY + Math.sin(this.offsetAngle) * this.offsetRadius * offsetScale;
     const dx = aimX - this.x;
     const dy = aimY - this.y;
     const dist = Math.hypot(dx, dy) || 1;
@@ -170,10 +172,9 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.wobble += (delta / 1000) * this.wobbleFreq;
     const px = -dy / dist;
     const py = dx / dist;
-    const wob = Math.sin(this.wobble) * this.wobbleAmp;
+    const wob = Math.sin(this.wobble) * this.wobbleAmp * offsetScale;
 
     if (this.profile.shoots?.preferredDistance) {
-      const distToPlayer = Math.hypot(targetX - this.x, targetY - this.y) || 1;
       const pref = this.profile.shoots.preferredDistance;
       const diff = distToPlayer - pref;
       const sign = diff > 0 ? 1 : -1;

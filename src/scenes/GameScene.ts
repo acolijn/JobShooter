@@ -30,10 +30,18 @@ export class GameScene extends Phaser.Scene {
   private coinTotal = 0;
   private coinsEarnedTotal = 0;
   private gameOver = false;
+  private playerName = 'Player';
   private starfield!: Phaser.GameObjects.Group;
 
   constructor() {
     super({ key: 'GameScene' });
+  }
+
+  init(data?: { playerName?: string }): void {
+    this.playerName = data?.playerName || getLastName() || 'Player';
+    this.coinTotal = 0;
+    this.coinsEarnedTotal = 0;
+    this.gameOver = false;
   }
 
   create(): void {
@@ -478,7 +486,7 @@ export class GameScene extends Phaser.Scene {
       title.destroy();
       list.destroy();
       hint.destroy();
-      this.scene.restart();
+      this.scene.start('MenuScene');
     };
     this.input.once('pointerdown', cleanup);
     this.input.keyboard?.once('keydown-SPACE', cleanup);
@@ -497,9 +505,7 @@ export class GameScene extends Phaser.Scene {
     }
     const qualifies = scores.length < 10 || score > (scores[scores.length - 1]?.score ?? 0);
     if (qualifies && score > 0) {
-      const last = getLastName();
-      const raw = window.prompt(`New high score: ${score}\nEnter your name:`, last) ?? last ?? 'Player';
-      const name = (raw || 'Player').slice(0, 16).trim() || 'Player';
+      const name = (this.playerName || 'Player').slice(0, 16).trim() || 'Player';
       setLastName(name);
       try {
         scores = await saveScore({

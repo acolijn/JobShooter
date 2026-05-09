@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
 import { UpgradeScene } from './scenes/UpgradeScene';
 import { GAME_HEIGHT, GAME_WIDTH } from './config';
@@ -18,7 +19,7 @@ const config: Phaser.Types.Core.GameConfig = {
     arcade: { gravity: { x: 0, y: 0 }, debug: false },
   },
   input: { activePointers: 3 },
-  scene: [GameScene, UpgradeScene],
+  scene: [MenuScene, GameScene, UpgradeScene],
 };
 
 new Phaser.Game(config);
