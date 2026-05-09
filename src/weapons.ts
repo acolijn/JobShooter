@@ -70,5 +70,9 @@ export const WEAPON_PROFILES: Record<WeaponType, WeaponProfile> = {
 };
 
 export function profileFor(stats: PlayerStats): WeaponProfile {
-  return WEAPON_PROFILES[stats.weaponType];
+  const base = WEAPON_PROFILES[stats.weaponType];
+  const tier = stats.weaponTiers?.[stats.weaponType] ?? 0;
+  if (tier === 0) return base;
+  // Tiers add extra projectiles via countDelta
+  return { ...base, countDelta: base.countDelta + tier };
 }

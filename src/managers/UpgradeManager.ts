@@ -17,31 +17,31 @@ export const ALL_UPGRADES: Upgrade[] = [
   {
     id: 'damage',
     name: 'Sharper Rounds',
-    description: '+25% bullet damage',
+    description: '+12% bullet damage',
     kind: 'stat',
-    cost: 8,
+    cost: 10,
     apply: (s) => {
-      s.bulletDamage = Math.round(s.bulletDamage * 1.25);
+      s.bulletDamage = Math.round(s.bulletDamage * 1.12);
     },
   },
   {
     id: 'firerate',
     name: 'Rapid Fire',
-    description: '-15% fire interval',
+    description: '-10% fire interval',
     kind: 'stat',
-    cost: 10,
+    cost: 12,
     apply: (s) => {
-      s.fireRateMs = Math.max(60, Math.round(s.fireRateMs * 0.85));
+      s.fireRateMs = Math.max(100, Math.round(s.fireRateMs * 0.9));
     },
   },
   {
     id: 'speed',
     name: 'Booster Thrusters',
-    description: '+15% move speed',
+    description: '+12% move speed',
     kind: 'stat',
-    cost: 6,
+    cost: 8,
     apply: (s) => {
-      s.speed = Math.round(s.speed * 1.15);
+      s.speed = Math.round(s.speed * 1.12);
     },
   },
   {
@@ -60,7 +60,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Multi-Shot',
     description: '+1 projectile per shot',
     kind: 'stat',
-    cost: 18,
+    cost: 28,
     apply: (s) => {
       s.bulletCount += 1;
     },
@@ -70,7 +70,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Piercing Rounds',
     description: '+1 enemy pierce',
     kind: 'stat',
-    cost: 14,
+    cost: 20,
     apply: (s) => {
       s.pierce += 1;
     },
@@ -130,11 +130,11 @@ export const ALL_UPGRADES: Upgrade[] = [
   {
     id: 'overcharge',
     name: 'Overcharge',
-    description: '+40% damage, +10% fire interval',
+    description: '+25% damage, +10% fire interval',
     kind: 'stat',
-    cost: 12,
+    cost: 15,
     apply: (s) => {
-      s.bulletDamage = Math.round(s.bulletDamage * 1.4);
+      s.bulletDamage = Math.round(s.bulletDamage * 1.25);
       s.fireRateMs = Math.round(s.fireRateMs * 1.1);
     },
   },
@@ -228,6 +228,80 @@ export const ALL_UPGRADES: Upgrade[] = [
     apply: (s) => {
       s.bombFuseMs = Math.round(s.bombFuseMs * 1.5);
     },
+  },
+
+  // ── Weapon tiers ──────────────────────────────────────────────────────────
+  {
+    id: 'tier-bullet-2',
+    name: 'Twin Cannon',
+    description: 'Bullets: upgrade to double barrel (+1 shot)',
+    kind: 'weapon',
+    cost: 20,
+    available: (s) => s.ownedWeapons.includes('bullet') && (s.weaponTiers['bullet'] ?? 0) < 1,
+    apply: (s) => { s.weaponTiers['bullet'] = 1; if (s.weaponType === 'bullet') s.bulletCount = Math.max(s.bulletCount, 2); },
+  },
+  {
+    id: 'tier-bullet-3',
+    name: 'Triple Cannon',
+    description: 'Bullets: upgrade to triple barrel (+2 shots total)',
+    kind: 'weapon',
+    cost: 32,
+    available: (s) => s.ownedWeapons.includes('bullet') && (s.weaponTiers['bullet'] ?? 0) === 1,
+    apply: (s) => { s.weaponTiers['bullet'] = 2; if (s.weaponType === 'bullet') s.bulletCount = Math.max(s.bulletCount, 3); },
+  },
+  {
+    id: 'tier-laser-2',
+    name: 'Twin Laser',
+    description: 'Laser: upgrade to double beam',
+    kind: 'weapon',
+    cost: 22,
+    available: (s) => s.ownedWeapons.includes('laser') && (s.weaponTiers['laser'] ?? 0) < 1,
+    apply: (s) => { s.weaponTiers['laser'] = 1; },
+  },
+  {
+    id: 'tier-laser-3',
+    name: 'Triple Laser',
+    description: 'Laser: upgrade to triple beam',
+    kind: 'weapon',
+    cost: 36,
+    available: (s) => s.ownedWeapons.includes('laser') && (s.weaponTiers['laser'] ?? 0) === 1,
+    apply: (s) => { s.weaponTiers['laser'] = 2; },
+  },
+  {
+    id: 'tier-plasma-2',
+    name: 'Plasma Barrage',
+    description: 'Plasma: fire 2 bolts per shot',
+    kind: 'weapon',
+    cost: 28,
+    available: (s) => s.ownedWeapons.includes('plasma') && (s.weaponTiers['plasma'] ?? 0) < 1,
+    apply: (s) => { s.weaponTiers['plasma'] = 1; },
+  },
+  {
+    id: 'tier-plasma-3',
+    name: 'Plasma Storm',
+    description: 'Plasma: fire 3 bolts per shot',
+    kind: 'weapon',
+    cost: 44,
+    available: (s) => s.ownedWeapons.includes('plasma') && (s.weaponTiers['plasma'] ?? 0) === 1,
+    apply: (s) => { s.weaponTiers['plasma'] = 2; },
+  },
+  {
+    id: 'tier-seeker-2',
+    name: 'Dual Seekers',
+    description: 'Missiles: launch 2 per volley',
+    kind: 'weapon',
+    cost: 28,
+    available: (s) => s.ownedWeapons.includes('seeker') && (s.weaponTiers['seeker'] ?? 0) < 1,
+    apply: (s) => { s.weaponTiers['seeker'] = 1; },
+  },
+  {
+    id: 'tier-seeker-3',
+    name: 'Missile Swarm',
+    description: 'Missiles: launch 3 per volley',
+    kind: 'weapon',
+    cost: 44,
+    available: (s) => s.ownedWeapons.includes('seeker') && (s.weaponTiers['seeker'] ?? 0) === 1,
+    apply: (s) => { s.weaponTiers['seeker'] = 2; },
   },
 ];
 

@@ -23,12 +23,18 @@ echo "==> Syncing scores server to ${HOST}:${REMOTE_DIR}/server"
 rsync -az server/ "${HOST}:${REMOTE_DIR}/server/"
 
 echo "==> Starting / restarting scores API on server"
-ssh "$HOST" "cd ${REMOTE_DIR} && \
-  if pm2 list | grep -q jobshooter-scores; then \
-    pm2 restart jobshooter-scores; \
-  else \
-    pm2 start server/index.mjs --name jobshooter-scores && pm2 save; \
-  fi"
+ssh "$HOST" "
+  if ! command -v pm2 &>/dev/null; then
+    echo 'Installing pm2...'
+    npm install -g pm2
+  fi
+  cd ${REMOTE_DIR}
+  if pm2 list | grep -q jobshooter-scores; then
+    pm2 restart jobshooter-scores
+  else
+    pm2 start server/index.mjs --name jobshooter-scores && pm2 save
+  fi
+"
 
 echo ""
 echo "Done."

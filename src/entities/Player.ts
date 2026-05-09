@@ -1,11 +1,18 @@
 import Phaser from 'phaser';
 import { TEX } from '../textures';
 import { PLAYER } from '../config';
-import { defaultStats, PlayerStats } from '../PlayerStats';
+import { defaultStats, PlayerStats, WeaponType } from '../PlayerStats';
 import { BulletGroup } from './Bullet';
 import { BombGroup, BombExplodeFn } from './Bomb';
 import { EnemyGroup } from './Enemy';
-import { profileFor } from '../weapons';
+import { profileFor, WEAPON_PROFILES } from '../weapons';
+
+export interface PowerUpState {
+  frozen: boolean;
+  shielded: boolean;
+  damageMultiplier: number;
+  superJobboss: boolean;
+}
 
 const ROTATE_SPEED = 4.5;
 
@@ -18,6 +25,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
   private regenAccum = 0;
   private aimHeading = -Math.PI / 2;
   private pointerMoved = false;
+  private keyboardAimedAt = -Infinity; // time of last Q/E keypress
   private keys!: {
     up: Phaser.Input.Keyboard.Key;
     down: Phaser.Input.Keyboard.Key;
@@ -58,8 +66,12 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
       q: kb.addKey(Phaser.Input.Keyboard.KeyCodes.Q),
       e: kb.addKey(Phaser.Input.Keyboard.KeyCodes.E),
     };
-    this.scene.input.on('pointermove', () => {
-      this.pointerMoved = true;
+    this.scene.input.on('pointermove', (ptr: Phaser.Input.Pointer) => {
+      // Only switch to mouse aim if the pointer actually moved a meaningful distance
+      // and keyboard rotation isn't active right now
+      if (ptr.distance > 2 && this.scene.time.now - this.keyboardAimedAt > 300) {
+        this.pointerMoved = true;
+      }
     });
     this.scene.input.on('pointerdown', () => {
       this.pointerMoved = true;
@@ -99,10 +111,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     bullets: BulletGroup,
     bombs: BombGroup,
     onExplode: BombExplodeFn,
+    powerUps?: PowerUpState,
   ): void {
     this.handleMove();
     this.handleAim(delta);
-    this.handleFire(time, bullets);
+    this.handleFire(time, bullets, powerUps);
     this.handleBomb(time, bombs, onExplode);
     this.handleRegen(delta);
   }
@@ -129,6 +142,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     if (manualRotate) {
       const dir = (k.e.isDown ? 1 : 0) - (k.q.isDown ? 1 : 0);
       this.aimHeading += dir * ROTATE_SPEED * (delta / 1000);
+      this.keyboardAimedAt = this.scene.time.now;
+      this.pointerMoved = false; // let keyboard take over until mouse moves again
     } else if (this.pointerMoved) {
       const p = this.scene.input.activePointer;
       const cam = this.scene.cameras.main;
@@ -147,11 +162,30 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     this.enemies = enemies;
   }
 
-  private handleFire(time: number, bullets: BulletGroup): void {
+  private handleFire(time: number, bullets: BulletGroup, powerUps?: PowerUpState): void {
     const prof = profileFor(this.stats);
     const interval = this.stats.fireRateMs * prof.fireRateMul;
     if (time < this.lastFireAt + interval) return;
     this.lastFireAt = time;
+
+    const damMul = powerUps?.damageMultiplier ?? 1;
+
+    if (powerUps?.superJobboss) {
+      // Fire ALL owned weapons simultaneously at max power
+      for (const wType of this.stats.ownedWeapons) {
+        this.fireWeapon(wType, bullets, damMul * 2);
+      }
+      return;
+    }
+
+    this.fireWeapon(this.stats.weaponType, bullets, damMul);
+  }
+
+  private fireWeapon(wType: WeaponType, bullets: BulletGroup, damMul: number): void {
+    const savedType = this.stats.weaponType;
+    this.stats.weaponType = wType;
+    const prof = profileFor(this.stats);
+    this.stats.weaponType = savedType;
 
     const aim = this.aimHeading;
     const count = Math.max(1, this.stats.bulletCount + prof.countDelta);
@@ -170,7 +204,7 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
         y: this.y + Math.sin(a) * 20,
         angle: a,
         speed: this.stats.bulletSpeed * prof.speedMul,
-        damage: Math.round(this.stats.bulletDamage * prof.damageMul),
+        damage: Math.round(this.stats.bulletDamage * prof.damageMul * damMul),
         pierce: this.stats.pierce + prof.pierceBonus,
         fromPlayer: true,
         texKey: prof.texKey,
@@ -216,7 +250,8 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     }
   }
 
-  takeDamage(amount: number, time: number): boolean {
+  takeDamage(amount: number, time: number, shielded = false): boolean {
+    if (shielded) return false;
     if (time < this.invulnUntil) return false;
     this.stats.hp -= amount;
     this.invulnUntil = time + PLAYER.invulnMs;

@@ -51,18 +51,30 @@ function makePlayer(scene: Phaser.Scene): void {
 }
 
 function makeEnemy(scene: Phaser.Scene): void {
+  // Grunt: compact wedge-shaped alien fighter
   if (scene.textures.exists(TEX.enemy)) return;
   const g = scene.add.graphics();
-  g.fillStyle(0xe14b4b, 1);
-  g.fillRect(2, 2, 32, 32);
-  g.fillStyle(0xffffff, 1);
-  g.fillCircle(11, 14, 3);
-  g.fillCircle(25, 14, 3);
-  g.fillStyle(0x000000, 1);
-  g.fillCircle(11, 14, 1.5);
-  g.fillCircle(25, 14, 1.5);
-  g.fillStyle(0x2a0000, 1);
-  g.fillRect(8, 24, 20, 3);
+  // Main hull
+  g.fillStyle(0xcc2222, 1);
+  g.beginPath();
+  g.moveTo(18, 0);
+  g.lineTo(36, 28);
+  g.lineTo(28, 22);
+  g.lineTo(18, 36);
+  g.lineTo(8, 22);
+  g.lineTo(0, 28);
+  g.closePath();
+  g.fillPath();
+  // Cockpit
+  g.fillStyle(0xff6666, 1);
+  g.fillTriangle(18, 4, 10, 20, 26, 20);
+  // Engine glow
+  g.fillStyle(0xff4400, 1);
+  g.fillRect(10, 26, 6, 5);
+  g.fillRect(20, 26, 6, 5);
+  g.fillStyle(0xffaa44, 0.8);
+  g.fillRect(11, 29, 4, 3);
+  g.fillRect(21, 29, 4, 3);
   g.generateTexture(TEX.enemy, 36, 36);
   g.destroy();
 }
@@ -77,76 +89,144 @@ function makeBullet(scene: Phaser.Scene, key: string, color: number, w: number, 
 }
 
 function makeEnemyRunner(scene: Phaser.Scene): void {
+  // Runner: slim dart-shaped fast ship
   if (scene.textures.exists(TEX.enemyRunner)) return;
   const g = scene.add.graphics();
-  g.fillStyle(0xff66aa, 1);
-  g.fillTriangle(14, 0, 0, 24, 28, 24);
-  g.fillStyle(0xffffff, 1);
-  g.fillCircle(10, 14, 2);
-  g.fillCircle(18, 14, 2);
+  // Sleek narrow hull
+  g.fillStyle(0xdd2288, 1);
+  g.beginPath();
+  g.moveTo(14, 0);
+  g.lineTo(22, 8);
+  g.lineTo(20, 28);
+  g.lineTo(14, 24);
+  g.lineTo(8, 28);
+  g.lineTo(6, 8);
+  g.closePath();
+  g.fillPath();
+  // Swept wings
+  g.fillStyle(0xaa1166, 1);
+  g.fillTriangle(6, 10, 0, 26, 10, 20);
+  g.fillTriangle(22, 10, 28, 26, 18, 20);
+  // Engine streak
+  g.fillStyle(0xff88cc, 1);
+  g.fillRect(11, 2, 6, 10);
+  g.fillStyle(0xffccee, 0.7);
+  g.fillRect(12, 22, 4, 6);
   g.generateTexture(TEX.enemyRunner, 28, 28);
   g.destroy();
 }
 
 function makeEnemyTank(scene: Phaser.Scene): void {
+  // Tank: wide heavy armored cruiser
   if (scene.textures.exists(TEX.enemyTank)) return;
   const g = scene.add.graphics();
-  g.fillStyle(0x447733, 1);
-  g.fillRect(0, 0, 48, 48);
-  g.lineStyle(3, 0x88ff88, 1);
-  g.strokeRect(2, 2, 44, 44);
-  g.fillStyle(0x222233, 1);
-  g.fillRect(8, 12, 32, 8);
-  g.fillRect(8, 28, 32, 8);
-  g.fillStyle(0xff4444, 1);
-  g.fillRect(20, 20, 8, 8);
+  // Wide hull body
+  g.fillStyle(0x336622, 1);
+  g.fillRect(4, 8, 40, 32);
+  // Armored side wings
+  g.fillStyle(0x224411, 1);
+  g.fillRect(0, 14, 6, 20);
+  g.fillRect(42, 14, 6, 20);
+  // Top ridge
+  g.fillStyle(0x558833, 1);
+  g.fillRect(8, 4, 32, 10);
+  // Nose
+  g.fillStyle(0x44aa33, 1);
+  g.fillTriangle(24, 0, 10, 8, 38, 8);
+  // Dual cannons
+  g.fillStyle(0x88ff44, 1);
+  g.fillRect(10, 0, 5, 8);
+  g.fillRect(33, 0, 5, 8);
+  // Engine glow (back)
+  g.fillStyle(0xff6600, 1);
+  g.fillRect(10, 36, 8, 8);
+  g.fillRect(30, 36, 8, 8);
+  g.fillStyle(0xffcc44, 0.8);
+  g.fillRect(12, 38, 4, 5);
+  g.fillRect(32, 38, 4, 5);
   g.generateTexture(TEX.enemyTank, 48, 48);
   g.destroy();
 }
 
 function makeEnemyShooter(scene: Phaser.Scene): void {
+  // Shooter: saucer-style ship with visible gun
   if (scene.textures.exists(TEX.enemyShooter)) return;
   const g = scene.add.graphics();
-  g.fillStyle(0x3388dd, 1);
-  g.fillCircle(18, 18, 16);
-  g.fillStyle(0x88ddff, 1);
-  g.fillCircle(18, 18, 10);
-  g.fillStyle(0x000022, 1);
-  g.fillCircle(18, 18, 5);
-  g.fillStyle(0xffaa00, 1);
-  g.fillRect(16, 0, 4, 8);
-  g.fillRect(16, 28, 4, 8);
+  // Saucer body
+  g.fillStyle(0x1155cc, 1);
+  g.fillEllipse(18, 20, 36, 18);
+  // Top dome
+  g.fillStyle(0x3388ff, 1);
+  g.fillEllipse(18, 14, 22, 14);
+  // Cockpit glass
+  g.fillStyle(0x88ccff, 0.9);
+  g.fillEllipse(18, 13, 12, 8);
+  // Central gun barrel
+  g.fillStyle(0x6699ff, 1);
+  g.fillRect(15, 2, 6, 10);
+  g.fillStyle(0x99bbff, 1);
+  g.fillRect(16, 0, 4, 4);
+  // Engine ring
+  g.fillStyle(0x0033aa, 1);
+  g.fillEllipse(18, 24, 28, 8);
+  g.fillStyle(0x4466ff, 0.6);
+  g.fillEllipse(18, 26, 20, 5);
   g.generateTexture(TEX.enemyShooter, 36, 36);
   g.destroy();
 }
 
 function makeEnemyBoss(scene: Phaser.Scene): void {
+  // Boss: massive dreadnought with swept wings and triple cannon
   if (scene.textures.exists(TEX.enemyBoss)) return;
   const g = scene.add.graphics();
-  g.fillStyle(0x661144, 1);
-  g.fillCircle(40, 40, 38);
+  // Main hull
+  g.fillStyle(0x550033, 1);
+  g.beginPath();
+  g.moveTo(40, 0);
+  g.lineTo(56, 20);
+  g.lineTo(72, 60);
+  g.lineTo(56, 52);
+  g.lineTo(40, 80);
+  g.lineTo(24, 52);
+  g.lineTo(8, 60);
+  g.lineTo(24, 20);
+  g.closePath();
+  g.fillPath();
+  // Swept wings
+  g.fillStyle(0x880044, 1);
+  g.fillTriangle(24, 24, 0, 60, 20, 44);
+  g.fillTriangle(56, 24, 80, 60, 60, 44);
+  // Wing stripe
+  g.fillStyle(0xff2266, 1);
+  g.fillTriangle(24, 28, 4, 56, 18, 42);
+  g.fillTriangle(56, 28, 76, 56, 62, 42);
+  // Center cockpit/bridge
+  g.fillStyle(0xcc1155, 1);
+  g.fillEllipse(40, 32, 28, 36);
+  // Cockpit glass
+  g.fillStyle(0xff4488, 1);
+  g.fillEllipse(40, 28, 16, 18);
+  g.fillStyle(0xff88aa, 0.5);
+  g.fillEllipse(40, 26, 9, 10);
+  // Triple cannons
   g.fillStyle(0xff3366, 1);
-  g.fillCircle(40, 40, 30);
-  g.fillStyle(0x220011, 1);
-  g.fillCircle(28, 34, 6);
-  g.fillCircle(52, 34, 6);
-  g.fillStyle(0xff8800, 1);
-  g.fillCircle(28, 34, 3);
-  g.fillCircle(52, 34, 3);
-  g.fillStyle(0x111111, 1);
-  g.fillRect(20, 50, 40, 6);
-  g.fillStyle(0xff3366, 1);
-  for (let i = 0; i < 6; i++) {
-    const ang = (i / 6) * Math.PI * 2;
-    g.fillTriangle(
-      40 + Math.cos(ang) * 38,
-      40 + Math.sin(ang) * 38,
-      40 + Math.cos(ang + 0.2) * 46,
-      40 + Math.sin(ang + 0.2) * 46,
-      40 + Math.cos(ang - 0.2) * 46,
-      40 + Math.sin(ang - 0.2) * 46,
-    );
-  }
+  g.fillRect(28, 0, 6, 16);
+  g.fillRect(37, 0, 6, 20);
+  g.fillRect(46, 0, 6, 16);
+  g.fillStyle(0xff88bb, 1);
+  g.fillRect(29, 0, 4, 4);
+  g.fillRect(38, 0, 4, 6);
+  g.fillRect(47, 0, 4, 4);
+  // Engine exhausts (back)
+  g.fillStyle(0x330022, 1);
+  g.fillRect(24, 66, 10, 12);
+  g.fillRect(46, 66, 10, 12);
+  g.fillStyle(0xff4400, 1);
+  g.fillRect(26, 68, 6, 8);
+  g.fillRect(48, 68, 6, 8);
+  g.fillStyle(0xffcc44, 0.9);
+  g.fillRect(27, 70, 4, 5);
+  g.fillRect(49, 70, 4, 5);
   g.generateTexture(TEX.enemyBoss, 80, 80);
   g.destroy();
 }

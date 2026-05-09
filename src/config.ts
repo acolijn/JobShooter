@@ -5,7 +5,7 @@ export const PLAYER = {
   speed: 320,
   radius: 16,
   maxHp: 100,
-  fireRateMs: 280,
+  fireRateMs: 450,
   bulletSpeed: 700,
   bulletDamage: 12,
   invulnMs: 600,

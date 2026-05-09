@@ -6,6 +6,7 @@ import { Enemy, EnemyGroup } from '../entities/Enemy';
 import { Bullet, BulletGroup } from '../entities/Bullet';
 import { Bomb, BombGroup } from '../entities/Bomb';
 import { Coin, CoinGroup } from '../entities/Coin';
+import { PowerUp, PowerUpGroup } from '../entities/PowerUp';
 import { WaveManager } from '../managers/WaveManager';
 import { profileFor, WEAPON_PROFILES } from '../weapons';
 import { computeScore, getLastName, loadScores, saveScore, setLastName, Score } from '../HighScores';
@@ -16,6 +17,14 @@ export class GameScene extends Phaser.Scene {
   private bombs!: BombGroup;
   private enemies!: EnemyGroup;
   private coins!: CoinGroup;
+  private powerUps!: PowerUpGroup;
+  // active timed power-up effects
+  private activeFreeze = false;
+  private shieldUntil = 0;
+  private doubleDamageUntil = 0;
+  private superJobbossUntil = 0;
+  private superJobbossBanner!: Phaser.GameObjects.Text;
+  private powerUpStatusText!: Phaser.GameObjects.Text;
   private bombCdBar!: Phaser.GameObjects.Rectangle;
   private weaponBarText!: Phaser.GameObjects.Text;
   private bossBarBg!: Phaser.GameObjects.Rectangle;
@@ -54,6 +63,7 @@ export class GameScene extends Phaser.Scene {
     this.bombs = new BombGroup(this);
     this.enemies = new EnemyGroup(this);
     this.coins = new CoinGroup(this);
+    this.powerUps = new PowerUpGroup(this);
     this.player.setEnemies(this.enemies);
 
     this.waveManager = new WaveManager(this, this.enemies, {
@@ -130,6 +140,8 @@ export class GameScene extends Phaser.Scene {
       if (killed) {
         const value = Math.max(1, Math.round(e.coinValue * this.player.stats.coinMultiplier));
         this.coins.drop(e.x, e.y, value);
+        const dropType = PowerUpGroup.rollDrop(e.type === 'boss', this.player.stats);
+        if (dropType) this.powerUps.drop(e.x, e.y, dropType);
       }
       if (b.pierce > 0) {
         b.pierce -= 1;
@@ -149,7 +161,7 @@ export class GameScene extends Phaser.Scene {
       const e = eObj as Enemy;
       if (!e.active) return;
       const now = this.time.now;
-      const took = this.player.takeDamage(e.damage, now);
+      const took = this.player.takeDamage(e.damage, now, now < this.shieldUntil);
       if (took) {
         const dx = this.player.x - e.x;
         const dy = this.player.y - e.y;
@@ -166,10 +178,18 @@ export class GameScene extends Phaser.Scene {
       c.kill();
     });
 
+    this.physics.add.overlap(this.player, this.powerUps, (_p, puObj) => {
+      const pu = puObj as PowerUp;
+      if (!pu.active) return;
+      this.collectPowerUp(pu);
+      pu.kill();
+    });
+
     this.physics.add.overlap(this.player, this.bullets, (_p, bObj) => {
       const b = bObj as Bullet;
       if (!b.active || b.fromPlayer) return;
-      const took = this.player.takeDamage(b.damage, this.time.now);
+      const now = this.time.now;
+      const took = this.player.takeDamage(b.damage, now, now < this.shieldUntil);
       if (took) b.kill();
     });
   }
@@ -250,6 +270,32 @@ export class GameScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(200)
       .setAlpha(0);
+
+    // Super Jobboss mode overlay banner
+    this.superJobbossBanner = this.add
+      .text(GAME_WIDTH / 2, 140, '★ SUPER JOBBOSS MODE ★', {
+        fontFamily: 'monospace',
+        fontSize: '32px',
+        color: '#ffdd00',
+        stroke: '#ff4400',
+        strokeThickness: 5,
+      })
+      .setOrigin(0.5)
+      .setDepth(300)
+      .setVisible(false);
+
+    // Active power-up status bar
+    this.powerUpStatusText = this.add
+      .text(GAME_WIDTH / 2, 12, '', {
+        fontFamily: 'monospace',
+        fontSize: '14px',
+        color: '#ffffff',
+        stroke: '#000000',
+        strokeThickness: 2,
+        align: 'center',
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(110);
 
     this.makeHelpPanel();
   }
@@ -338,9 +384,12 @@ export class GameScene extends Phaser.Scene {
       this.bombCdBar.setVisible(false);
     }
 
+    // Weapon bar: show tier as stars, active weapon highlighted
     const parts = s.ownedWeapons.map((w, i) => {
       const label = WEAPON_PROFILES[w].label;
-      const tag = `[${i + 1}]${label}`;
+      const tier = s.weaponTiers?.[w] ?? 0;
+      const stars = tier > 0 ? '★'.repeat(tier) : '';
+      const tag = `[${i + 1}]${label}${stars}`;
       return w === s.weaponType ? `>${tag}<` : ` ${tag} `;
     });
     this.weaponBarText.setText('WPN ' + parts.join(' '));
@@ -387,8 +436,16 @@ export class GameScene extends Phaser.Scene {
   update(time: number, delta: number): void {
     if (this.gameOver) return;
     this.updateStarfield(delta);
-    this.player.update(time, delta, this.bullets, this.bombs, (x, y, r, d) => this.detonate(x, y, r, d));
-    this.enemies.updateAll(time, delta, this.player.x, this.player.y);
+    this.updatePowerUps(time);
+    this.player.update(time, delta, this.bullets, this.bombs, (x, y, r, d) => this.detonate(x, y, r, d), {
+      frozen: this.activeFreeze,
+      shielded: time < this.shieldUntil,
+      damageMultiplier: (time < this.doubleDamageUntil || time < this.superJobbossUntil) ? 2 : 1,
+      superJobboss: time < this.superJobbossUntil,
+    });
+    if (!this.activeFreeze) {
+      this.enemies.updateAll(time, delta, this.player.x, this.player.y);
+    }
     this.waveManager.update();
     this.updateHud(time);
     if (this.player.isDead()) this.endGame();
@@ -424,6 +481,8 @@ export class GameScene extends Phaser.Scene {
         if (killed) {
           const value = Math.max(1, Math.round(e.coinValue * this.player.stats.coinMultiplier));
           this.coins.drop(e.x, e.y, value);
+          const dropType = PowerUpGroup.rollDrop(e.type === 'boss', this.player.stats);
+          if (dropType) this.powerUps.drop(e.x, e.y, dropType);
         } else {
           const len = Math.hypot(dx, dy) || 1;
           e.setVelocity((dx / len) * 220, (dy / len) * 220);
@@ -431,6 +490,87 @@ export class GameScene extends Phaser.Scene {
       }
       return true;
     });
+  }
+
+  private collectPowerUp(pu: PowerUp): void {
+    const def = pu.def;
+    const now = this.time.now;
+
+    // Instant stat pickups
+    if (def.apply) {
+      def.apply(this.player.stats);
+      this.showBanner(`+${def.label}`);
+      return;
+    }
+
+    switch (def.type) {
+      case 'freeze':
+        this.activeFreeze = true;
+        this.enemies.children.each((c) => {
+          const e = c as Enemy;
+          if (e.active) { e.setVelocity(0, 0); e.setTint(0x88ddff); }
+          return true;
+        });
+        this.showBanner('❄ FREEZE!');
+        this.time.delayedCall(def.durationMs!, () => {
+          this.activeFreeze = false;
+          this.enemies.children.each((c) => {
+            const e = c as Enemy;
+            if (e.active) e.setTint(0xffffff);
+            return true;
+          });
+        });
+        break;
+
+      case 'shield':
+        this.shieldUntil = now + def.durationMs!;
+        this.showBanner('🛡 SHIELD!');
+        break;
+
+      case 'double_damage':
+        this.doubleDamageUntil = now + def.durationMs!;
+        this.showBanner('💥 DOUBLE DMG!');
+        break;
+
+      case 'super_jobboss':
+        this.superJobbossUntil = now + def.durationMs!;
+        this.showBanner('★ SUPER JOBBOSS! ★');
+        this.cameras.main.shake(300, 0.01);
+        this.superJobbossBanner.setVisible(true);
+        this.tweens.killTweensOf(this.superJobbossBanner);
+        this.tweens.add({
+          targets: this.superJobbossBanner,
+          scaleX: 1.08,
+          scaleY: 1.08,
+          duration: 400,
+          yoyo: true,
+          repeat: -1,
+        });
+        this.time.delayedCall(def.durationMs!, () => {
+          if (this.time.now >= this.superJobbossUntil) {
+            this.superJobbossBanner.setVisible(false);
+            this.tweens.killTweensOf(this.superJobbossBanner);
+          }
+        });
+        break;
+    }
+  }
+
+  private updatePowerUps(time: number): void {
+    // Shield: tint player green while active
+    if (time < this.shieldUntil) {
+      this.player.setTint(0x88ff88);
+    } else {
+      this.player.setTint(0xffffff);
+    }
+
+    // Center status bar — ONLY timed effects with countdown
+    const parts: string[] = [];
+    if (this.activeFreeze) parts.push('❄ FREEZE');
+    if (time < this.shieldUntil) parts.push(`🛡 SHIELD ${Math.ceil((this.shieldUntil - time) / 1000)}s`);
+    if (time < this.doubleDamageUntil) parts.push(`💥 ×2 DMG ${Math.ceil((this.doubleDamageUntil - time) / 1000)}s`);
+    if (time < this.superJobbossUntil) parts.push(`★ JOBBOSS ${Math.ceil((this.superJobbossUntil - time) / 1000)}s`);
+    this.powerUpStatusText.setText(parts.length ? `[ ${parts.join('  |  ')} ]` : '');
   }
 
   private endGame(): void {

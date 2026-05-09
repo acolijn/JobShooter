@@ -5,6 +5,8 @@ export type WeaponType = 'bullet' | 'laser' | 'plasma' | 'seeker';
 export interface PlayerStats {
   maxHp: number;
   hp: number;
+  // weapon tier: 0=single, 1=double, 2=triple per weapon type
+  weaponTiers: Record<string, number>;
   speed: number;
   fireRateMs: number;
   bulletSpeed: number;
@@ -39,6 +41,7 @@ export function defaultStats(): PlayerStats {
     regenPerSec: 0,
     weaponType: 'bullet',
     ownedWeapons: ['bullet'],
+    weaponTiers: { bullet: 0, laser: 0, plasma: 0, seeker: 0 },
     bombEnabled: false,
     bombDamage: 60,
     bombRadius: 110,
