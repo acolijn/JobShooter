@@ -92,43 +92,41 @@ cd /opt/jobshooter
 
 ### 2. Add the nginx config
 
-Open your existing nginx config (e.g. `/etc/nginx/sites-available/default`) and append the contents of [`deploy/nginx-snippet.conf`](deploy/nginx-snippet.conf).
-
-Update the `root` directive to the correct path:
-
-```nginx
-root /opt/jobshooter/dist;
-```
-
-Then reload nginx:
+Append the contents of [`deploy/nginx-snippet.conf`](deploy/nginx-snippet.conf) to your existing nginx server block (before the `listen 443 ssl;` line), then reload nginx:
 
 ```bash
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-This exposes:
-- Port **5175** — game (static files served directly by nginx)
-- Port **5176** — scores API (proxied from localhost:3001)
+This adds:
+- `https://logit-xams.nl/jobshooter/` — game (static files served by nginx)
+- `https://logit-xams.nl/jobshooter-scores/` — scores API (proxied from localhost:3001)
 
-### 3. Build and start
+### 3. Build and deploy
 
 From your **local machine**, run:
 
 ```bash
-./install.sh YOUR_SERVER_IP   # e.g. ./install.sh 192.168.1.100
+./install.sh do   # 'do' = your SSH host alias, or use user@ip
 ```
 
 This will:
-1. Build the frontend with `VITE_SCORES_API` pointing at `http://YOUR_SERVER_IP:5176`
-2. Copy `dist/` to the server at `/opt/jobshooter/dist`
-3. Start (or restart) the scores API with pm2
+1. Build the frontend with the correct API URL baked in
+2. Rsync `dist/` to `/opt/jobshooter/dist/` on the server
+3. Rsync `server/` to `/opt/jobshooter/server/` on the server
+4. Start (or restart) the scores API with pm2
 
 ### 4. Updates
 
 Same command:
 
 ```bash
-./install.sh YOUR_SERVER_IP
+./install.sh do
 ```
 
-pm2 keeps the API running across reboots (`pm2 startup` + `pm2 save` after first install).
+pm2 keeps the API running across reboots. After first install, run on the server:
+
+```bash
+pm2 startup   # follow the printed command
+pm2 save
+```
