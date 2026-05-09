@@ -86,8 +86,8 @@ Requires: **Node**, **npm**, **pm2** (`npm install -g pm2`), and **nginx** alrea
 ### 1. Clone the repo on the server
 
 ```bash
-git clone https://github.com/acolijn/JobShooter /opt/jobshooter
-cd /opt/jobshooter
+git clone https://github.com/acolijn/JobShooter /root/jobshooter
+cd /root/jobshooter
 ```
 
 ### 2. Add the nginx config
@@ -112,8 +112,8 @@ From your **local machine**, run:
 
 This will:
 1. Build the frontend with the correct API URL baked in
-2. Rsync `dist/` to `/opt/jobshooter/dist/` on the server
-3. Rsync `server/` to `/opt/jobshooter/server/` on the server
+2. Rsync `dist/` to `/root/jobshooter/` on the server
+3. Rsync `server/` to `/root/jobshooter/server/` on the server
 4. Start (or restart) the scores API with pm2
 
 ### 4. Updates

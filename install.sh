@@ -9,15 +9,15 @@
 set -euo pipefail
 
 HOST=${1:?Usage: ./install.sh <ssh-host>}
-REMOTE_DIR=/opt/jobshooter
+REMOTE_DIR=/root/jobshooter
 
 echo "==> Building app"
 npm ci --silent
 VITE_SCORES_API="https://logit-xams.nl/jobshooter-scores" npm run build
 
-echo "==> Syncing dist/ to ${HOST}:${REMOTE_DIR}/dist"
-ssh "$HOST" "mkdir -p ${REMOTE_DIR}/dist"
-rsync -az --delete dist/ "${HOST}:${REMOTE_DIR}/dist/"
+echo "==> Syncing dist/ to ${HOST}:${REMOTE_DIR}"
+ssh "$HOST" "mkdir -p ${REMOTE_DIR}"
+rsync -az --delete dist/ "${HOST}:${REMOTE_DIR}/"
 
 echo "==> Syncing scores server to ${HOST}:${REMOTE_DIR}/server"
 rsync -az server/ "${HOST}:${REMOTE_DIR}/server/"
