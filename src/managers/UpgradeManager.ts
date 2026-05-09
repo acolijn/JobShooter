@@ -175,6 +175,30 @@ export const ALL_UPGRADES: Upgrade[] = [
     },
   },
   {
+    id: 'weapon-lightning',
+    name: 'Lightning Zapper',
+    description: 'Unlock zapper: ultra-fast bolts, pierces 4 enemies, lower damage',
+    kind: 'weapon',
+    cost: 30,
+    available: (s) => !s.ownedWeapons.includes('lightning'),
+    apply: (s) => {
+      if (!s.ownedWeapons.includes('lightning')) s.ownedWeapons.push('lightning');
+      s.weaponType = 'lightning';
+    },
+  },
+  {
+    id: 'weapon-turd',
+    name: 'Turd Gun',
+    description: 'Unlock turd gun: slow brown blobs, very high damage, messy spread',
+    kind: 'weapon',
+    cost: 28,
+    available: (s) => !s.ownedWeapons.includes('turd'),
+    apply: (s) => {
+      if (!s.ownedWeapons.includes('turd')) s.ownedWeapons.push('turd');
+      s.weaponType = 'turd';
+    },
+  },
+  {
     id: 'bomb-bay',
     name: 'Bomb Bay',
     description: 'Auto-launch AOE bombs every few seconds',
@@ -302,6 +326,42 @@ export const ALL_UPGRADES: Upgrade[] = [
     cost: 44,
     available: (s) => s.ownedWeapons.includes('seeker') && (s.weaponTiers['seeker'] ?? 0) === 1,
     apply: (s) => { s.weaponTiers['seeker'] = 2; },
+  },
+  {
+    id: 'tier-lightning-2',
+    name: 'Twin Zapper',
+    description: 'Zapper: fire 2 bolts per shot',
+    kind: 'weapon',
+    cost: 22,
+    available: (s) => s.ownedWeapons.includes('lightning') && (s.weaponTiers['lightning'] ?? 0) < 1,
+    apply: (s) => { s.weaponTiers['lightning'] = 1; },
+  },
+  {
+    id: 'tier-lightning-3',
+    name: 'Storm Zapper',
+    description: 'Zapper: fire 3 bolts per shot',
+    kind: 'weapon',
+    cost: 36,
+    available: (s) => s.ownedWeapons.includes('lightning') && (s.weaponTiers['lightning'] ?? 0) === 1,
+    apply: (s) => { s.weaponTiers['lightning'] = 2; },
+  },
+  {
+    id: 'tier-turd-2',
+    name: 'Double Dump',
+    description: 'Turd Gun: launch 2 blobs per shot',
+    kind: 'weapon',
+    cost: 20,
+    available: (s) => s.ownedWeapons.includes('turd') && (s.weaponTiers['turd'] ?? 0) < 1,
+    apply: (s) => { s.weaponTiers['turd'] = 1; },
+  },
+  {
+    id: 'tier-turd-3',
+    name: 'Triple Stinker',
+    description: 'Turd Gun: launch 3 blobs per shot',
+    kind: 'weapon',
+    cost: 32,
+    available: (s) => s.ownedWeapons.includes('turd') && (s.weaponTiers['turd'] ?? 0) === 1,
+    apply: (s) => { s.weaponTiers['turd'] = 2; },
   },
 ];
 

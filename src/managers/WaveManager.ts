@@ -90,11 +90,11 @@ export class WaveManager {
     }
 
     const wf = this.wave - 1;
-    const hpMul = type === 'boss' ? 1 + 0.35 * wf : 1 + 0.18 * wf;
+    const hpMul = type === 'boss' ? 1 + 0.50 * wf : 1 + 0.28 * wf;
     const speedAdd = WAVE.speedPerWave * wf;
-    const damageMul = 1 + 0.08 * wf;
+    const damageMul = 1 + 0.14 * wf;
     const coinMul = 1 + 0.1 * wf;
-    this.enemies.spawnAt({ x, y, type, hpMul, speedAdd, damageMul, coinMul });
+    this.enemies.spawnAt({ x, y, type, hpMul, speedAdd, damageMul, coinMul, wave: this.wave });
   }
 
   update(): void {

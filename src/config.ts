@@ -12,9 +12,9 @@ export const PLAYER = {
 };
 
 export const ENEMY = {
-  baseHp: 20,
+  baseHp: 30,
   baseSpeed: 90,
-  baseDamage: 10,
+  baseDamage: 14,
   contactCooldownMs: 600,
   radius: 16,
   coinDrop: 1,
@@ -23,8 +23,8 @@ export const ENEMY = {
 export const WAVE = {
   baseCount: 6,
   countPerWave: 3,
-  hpPerWave: 6,
-  speedPerWave: 8,
+  hpPerWave: 10,
+  speedPerWave: 12,
   spawnIntervalMs: 700,
   interWaveDelayMs: 1200,
 };

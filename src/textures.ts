@@ -10,6 +10,8 @@ export const TEX = {
   bullet: 'tex_bullet',
   laser: 'tex_laser',
   plasma: 'tex_plasma',
+  lightning: 'tex_lightning',
+  turd: 'tex_turd',
   enemyBullet: 'tex_enemy_bullet',
   coin: 'tex_coin',
   bomb: 'tex_bomb',
@@ -26,6 +28,8 @@ export function generateTextures(scene: Phaser.Scene): void {
   makeBullet(scene, TEX.bullet, 0x9ef7ff, 4, 14);
   makeBullet(scene, TEX.laser, 0x66ff88, 3, 22);
   makePlasma(scene);
+  makeLightning(scene);
+  makeTurd(scene);
   makeBullet(scene, TEX.enemyBullet, 0xff6b6b, 5, 5);
   makeCoin(scene);
   makeBomb(scene);
@@ -282,3 +286,60 @@ function makeCoin(scene: Phaser.Scene): void {
   g.generateTexture(TEX.coin, 16, 16);
   g.destroy();
 }
+
+function makeLightning(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TEX.lightning)) return;
+  const g = scene.add.graphics();
+  // White outer glow
+  g.fillStyle(0xffffff, 0.35);
+  g.fillRoundedRect(0, 0, 8, 20, 3);
+  // Yellow bolt body (jagged lightning shape)
+  g.fillStyle(0xffee22, 1);
+  g.beginPath();
+  g.moveTo(4, 0);
+  g.lineTo(8, 9);
+  g.lineTo(5, 9);
+  g.lineTo(8, 20);
+  g.lineTo(0, 11);
+  g.lineTo(3, 11);
+  g.lineTo(0, 0);
+  g.closePath();
+  g.fillPath();
+  // White-hot core
+  g.fillStyle(0xffffff, 0.85);
+  g.beginPath();
+  g.moveTo(3.5, 1);
+  g.lineTo(6, 8);
+  g.lineTo(4, 8);
+  g.lineTo(6.5, 18);
+  g.lineTo(1.5, 11);
+  g.lineTo(3.5, 11);
+  g.lineTo(1.5, 1);
+  g.closePath();
+  g.fillPath();
+  g.generateTexture(TEX.lightning, 8, 20);
+  g.destroy();
+}
+
+function makeTurd(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TEX.turd)) return;
+  const g = scene.add.graphics();
+  // Dark brown base blob
+  g.fillStyle(0x4a2209, 1);
+  g.fillCircle(8, 11, 7);
+  // Mid-tier coil
+  g.fillCircle(8, 6, 5);
+  // Top nub
+  g.fillCircle(8, 2, 3);
+  // Lighter brown sheen / highlight
+  g.fillStyle(0x7a3d12, 1);
+  g.fillCircle(6, 9, 3.5);
+  g.fillCircle(6.5, 5, 2.5);
+  // Pea-green stink spot
+  g.fillStyle(0x66aa22, 0.7);
+  g.fillCircle(11, 4, 1.5);
+  g.fillCircle(3, 11, 1.2);
+  g.generateTexture(TEX.turd, 16, 18);
+  g.destroy();
+}
+

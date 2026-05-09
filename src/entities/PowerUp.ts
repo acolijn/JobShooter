@@ -14,7 +14,9 @@ export type PowerUpType =
   | 'tier_bullet'
   | 'tier_laser'
   | 'tier_plasma'
-  | 'tier_seeker';
+  | 'tier_seeker'
+  | 'tier_lightning'
+  | 'tier_turd';
 
 export interface PowerUpDef {
   type: PowerUpType;
@@ -60,14 +62,14 @@ export const POWER_UP_DEFS: Record<PowerUpType, PowerUpDef> = {
     label: '+DMG',
     color: 0xff6666,
     glowColor: 0xff2222,
-    apply: (s) => { s.bulletDamage = Math.round(s.bulletDamage * 1.15); },
+    apply: (s) => { s.bulletDamage = Math.round(s.bulletDamage * 1.08); },
   },
   stat_firerate: {
     type: 'stat_firerate',
     label: '+ROF',
     color: 0xffaa44,
     glowColor: 0xff8800,
-    apply: (s) => { s.fireRateMs = Math.max(60, Math.round(s.fireRateMs * 0.9)); },
+    apply: (s) => { s.fireRateMs = Math.max(80, Math.round(s.fireRateMs * 0.93)); },
   },
   stat_speed: {
     type: 'stat_speed',
@@ -133,6 +135,28 @@ export const POWER_UP_DEFS: Record<PowerUpType, PowerUpDef> = {
       if (t < 2) s.weaponTiers['seeker'] = t + 1;
     },
     available: (s) => s.ownedWeapons.includes('seeker') && (s.weaponTiers['seeker'] ?? 0) < 2,
+  },
+  tier_lightning: {
+    type: 'tier_lightning',
+    label: 'ZAPPER UPGRADE',
+    color: 0xffff44,
+    glowColor: 0xddcc00,
+    apply: (s) => {
+      const t = (s.weaponTiers['lightning'] ?? 0);
+      if (t < 2) s.weaponTiers['lightning'] = t + 1;
+    },
+    available: (s) => s.ownedWeapons.includes('lightning') && (s.weaponTiers['lightning'] ?? 0) < 2,
+  },
+  tier_turd: {
+    type: 'tier_turd',
+    label: 'TURD UPGRADE',
+    color: 0x7a3d12,
+    glowColor: 0x3d1a00,
+    apply: (s) => {
+      const t = (s.weaponTiers['turd'] ?? 0);
+      if (t < 2) s.weaponTiers['turd'] = t + 1;
+    },
+    available: (s) => s.ownedWeapons.includes('turd') && (s.weaponTiers['turd'] ?? 0) < 2,
   },
 };
 
@@ -269,7 +293,7 @@ export class PowerUpGroup extends Phaser.Physics.Arcade.Group {
       return rollSpecial();
     }
     // Weapon tier upgrade (rare, context-aware)
-    if (stats && Math.random() < 0.05) {
+    if (stats && Math.random() < 0.015) {
       const tier = rollWeaponTier(stats);
       if (tier) return tier;
     }
@@ -296,7 +320,7 @@ function rollStat(): PowerUpType {
 }
 
 function rollWeaponTier(stats: PlayerStats): PowerUpType | null {
-  const TIER_TYPES: PowerUpType[] = ['tier_bullet', 'tier_laser', 'tier_plasma', 'tier_seeker'];
+  const TIER_TYPES: PowerUpType[] = ['tier_bullet', 'tier_laser', 'tier_plasma', 'tier_seeker', 'tier_lightning', 'tier_turd'];
   const upgradeable = TIER_TYPES.filter((t) => {
     const def = POWER_UP_DEFS[t];
     return def.available?.(stats) ?? false;

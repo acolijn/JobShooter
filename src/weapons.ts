@@ -67,6 +67,30 @@ export const WEAPON_PROFILES: Record<WeaponType, WeaponProfile> = {
     homing: true,
     turnRate: 3.0,
   },
+  lightning: {
+    texKey: TEX.lightning,
+    speedMul: 2.2,
+    damageMul: 0.35,
+    pierceBonus: 3,
+    fireRateMul: 0.55,
+    spreadMul: 0.25,
+    scale: 1,
+    bodyRadius: 3,
+    countDelta: 0,
+    label: 'Zapper',
+  },
+  turd: {
+    texKey: TEX.turd,
+    speedMul: 0.28,
+    damageMul: 2.0,
+    pierceBonus: 0,
+    fireRateMul: 1.9,
+    spreadMul: 1.6,
+    scale: 1.4,
+    bodyRadius: 9,
+    countDelta: 0,
+    label: 'Turd Gun',
+  },
 };
 
 export function profileFor(stats: PlayerStats): WeaponProfile {

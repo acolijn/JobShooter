@@ -1,6 +1,6 @@
 import { PLAYER } from './config';
 
-export type WeaponType = 'bullet' | 'laser' | 'plasma' | 'seeker';
+export type WeaponType = 'bullet' | 'laser' | 'plasma' | 'seeker' | 'lightning' | 'turd';
 
 export interface PlayerStats {
   maxHp: number;
@@ -41,7 +41,7 @@ export function defaultStats(): PlayerStats {
     regenPerSec: 0,
     weaponType: 'bullet',
     ownedWeapons: ['bullet'],
-    weaponTiers: { bullet: 0, laser: 0, plasma: 0, seeker: 0 },
+    weaponTiers: { bullet: 0, laser: 0, plasma: 0, seeker: 0, lightning: 0, turd: 0 },
     bombEnabled: false,
     bombDamage: 60,
     bombRadius: 110,

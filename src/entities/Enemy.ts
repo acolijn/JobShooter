@@ -35,9 +35,9 @@ export const ENEMY_PROFILES: Record<EnemyType, EnemyProfile> = {
     label: 'Grunt',
   },
   runner: {
-    hp: 12,
+    hp: 20,
     speed: 180,
-    damage: 8,
+    damage: 12,
     coinValue: 1,
     scale: 1,
     bodyRadius: 12,
@@ -45,9 +45,9 @@ export const ENEMY_PROFILES: Record<EnemyType, EnemyProfile> = {
     label: 'Runner',
   },
   tank: {
-    hp: 90,
+    hp: 140,
     speed: 55,
-    damage: 18,
+    damage: 22,
     coinValue: 3,
     scale: 1,
     bodyRadius: 22,
@@ -55,26 +55,26 @@ export const ENEMY_PROFILES: Record<EnemyType, EnemyProfile> = {
     label: 'Tank',
   },
   shooter: {
-    hp: 28,
+    hp: 45,
     speed: 70,
-    damage: 8,
+    damage: 10,
     coinValue: 2,
     scale: 1,
     bodyRadius: 16,
     texKey: TEX.enemyShooter,
     label: 'Shooter',
-    shoots: { intervalMs: 1500, bulletSpeed: 280, bulletDamage: 10, preferredDistance: 280 },
+    shoots: { intervalMs: 1200, bulletSpeed: 320, bulletDamage: 14, preferredDistance: 280 },
   },
   boss: {
     hp: 180,
     speed: 60,
-    damage: 14,
+    damage: 20,
     coinValue: 12,
     scale: 1,
     bodyRadius: 36,
     texKey: TEX.enemyBoss,
     label: 'Boss',
-    shoots: { intervalMs: 1100, bulletSpeed: 300, bulletDamage: 10, preferredDistance: 320 },
+    shoots: { intervalMs: 900, bulletSpeed: 350, bulletDamage: 16, preferredDistance: 320 },
   },
 };
 
@@ -86,6 +86,7 @@ export interface EnemySpawnOpts {
   speedAdd: number;
   damageMul: number;
   coinMul: number;
+  wave?: number;
 }
 
 export class Enemy extends Phaser.Physics.Arcade.Sprite {
@@ -96,8 +97,10 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
   damage = ENEMY.baseDamage;
   coinValue = 1;
   lastContactAt = 0;
+  wave = 1;
   private profile: EnemyProfile = ENEMY_PROFILES.grunt;
   private lastShotAt = 0;
+  private spiralAngle = 0;
   private wobble = 0;
   private offsetAngle = 0;
   private offsetRadius = 0;
@@ -111,8 +114,16 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
 
   spawn(opts: EnemySpawnOpts): void {
     this.type = opts.type;
+    this.wave = opts.wave ?? 1;
     const prof = ENEMY_PROFILES[opts.type];
-    this.profile = prof;
+    // For bosses, scale fire rate and speed with wave
+    if (opts.type === 'boss') {
+      const w = this.wave;
+      const scaledInterval = Math.max(400, 900 - (w - 1) * 60);
+      this.profile = { ...prof, shoots: prof.shoots ? { ...prof.shoots, intervalMs: scaledInterval } : undefined };
+    } else {
+      this.profile = prof;
+    }
     this.setTexture(prof.texKey);
     this.enableBody(true, opts.x, opts.y, true, true);
     this.setActive(true).setVisible(true);
@@ -125,6 +136,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     this.coinValue = Math.max(1, Math.round(prof.coinValue * opts.coinMul));
     this.lastContactAt = 0;
     this.lastShotAt = this.scene.time.now + Phaser.Math.Between(200, 800);
+    this.spiralAngle = 0;
     this.wobble = Math.random() * Math.PI * 2;
     this.offsetAngle = Math.random() * Math.PI * 2;
     this.offsetRadius = opts.type === 'boss' ? 0 : 30 + Math.random() * 50;
@@ -198,28 +210,56 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     if (this.profile.shoots && time >= this.lastShotAt + this.profile.shoots.intervalMs) {
       this.lastShotAt = time;
       const sp = this.profile.shoots;
-      this.scene.events.emit('enemy-fire', {
-        x: this.x,
-        y: this.y,
-        angle: angToTarget,
-        speed: sp.bulletSpeed,
-        damage: sp.bulletDamage,
-      });
+      const fire = (angle: number, speedMul = 1, dmgMul = 1) => {
+        this.scene.events.emit('enemy-fire', {
+          x: this.x,
+          y: this.y,
+          angle,
+          speed: sp.bulletSpeed * speedMul,
+          damage: Math.round(sp.bulletDamage * dmgMul),
+        });
+      };
+
       if (this.type === 'boss') {
-        this.scene.events.emit('enemy-fire', {
-          x: this.x,
-          y: this.y,
-          angle: angToTarget + 0.3,
-          speed: sp.bulletSpeed,
-          damage: sp.bulletDamage,
-        });
-        this.scene.events.emit('enemy-fire', {
-          x: this.x,
-          y: this.y,
-          angle: angToTarget - 0.3,
-          speed: sp.bulletSpeed,
-          damage: sp.bulletDamage,
-        });
+        const w = this.wave;
+        // Tier 1 (waves 1-2): 3-way spread
+        if (w <= 2) {
+          fire(angToTarget);
+          fire(angToTarget + 0.3);
+          fire(angToTarget - 0.3);
+        }
+        // Tier 2 (waves 3-4): 5-way spread, faster bullets
+        else if (w <= 4) {
+          for (let i = -2; i <= 2; i++) {
+            fire(angToTarget + i * 0.28, 1.2);
+          }
+        }
+        // Tier 3 (waves 5-6): spiral burst + aimed shot
+        else if (w <= 6) {
+          // Aimed centre shot
+          fire(angToTarget, 1.3, 1.2);
+          // Spiral ring: 8 shots in rotating ring
+          const spiralStep = (Math.PI * 2) / 8;
+          for (let i = 0; i < 8; i++) {
+            fire(this.spiralAngle + spiralStep * i, 0.9, 0.7);
+          }
+          this.spiralAngle += 0.4;
+        }
+        // Tier 4 (waves 7+): spiral + 5-way spread + homing burst
+        else {
+          // 5-way aimed
+          for (let i = -2; i <= 2; i++) {
+            fire(angToTarget + i * 0.22, 1.4, 1.3);
+          }
+          // Rotating spiral: 12 shots
+          const spiralStep = (Math.PI * 2) / 12;
+          for (let i = 0; i < 12; i++) {
+            fire(this.spiralAngle + spiralStep * i, 1.1, 0.8);
+          }
+          this.spiralAngle += 0.52;
+        }
+      } else {
+        fire(angToTarget);
       }
     }
   }
