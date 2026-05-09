@@ -119,7 +119,7 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
     // For bosses, scale fire rate and speed with wave
     if (opts.type === 'boss') {
       const w = this.wave;
-      const scaledInterval = Math.max(400, 900 - (w - 1) * 60);
+      const scaledInterval = Math.max(600, 1100 - (w - 1) * 50);
       this.profile = { ...prof, shoots: prof.shoots ? { ...prof.shoots, intervalMs: scaledInterval } : undefined };
     } else {
       this.profile = prof;
@@ -234,29 +234,29 @@ export class Enemy extends Phaser.Physics.Arcade.Sprite {
             fire(angToTarget + i * 0.28, 1.2);
           }
         }
-        // Tier 3 (waves 5-6): spiral burst + aimed shot
+        // Tier 3 (waves 5-6): aimed shot + slow 6-bullet spiral ring
         else if (w <= 6) {
           // Aimed centre shot
-          fire(angToTarget, 1.3, 1.2);
-          // Spiral ring: 8 shots in rotating ring
+          fire(angToTarget, 1.1, 1.1);
+          // Spiral ring: 6 shots, lower speed
+          const spiralStep = (Math.PI * 2) / 6;
+          for (let i = 0; i < 6; i++) {
+            fire(this.spiralAngle + spiralStep * i, 0.7, 0.6);
+          }
+          this.spiralAngle += 0.35;
+        }
+        // Tier 4 (waves 7+): 3-way aimed + 8-bullet spiral
+        else {
+          // 3-way aimed (not 5, to leave dodging room)
+          for (let i = -1; i <= 1; i++) {
+            fire(angToTarget + i * 0.3, 1.2, 1.1);
+          }
+          // Rotating spiral: 8 shots, moderate speed
           const spiralStep = (Math.PI * 2) / 8;
           for (let i = 0; i < 8; i++) {
-            fire(this.spiralAngle + spiralStep * i, 0.9, 0.7);
+            fire(this.spiralAngle + spiralStep * i, 0.85, 0.7);
           }
-          this.spiralAngle += 0.4;
-        }
-        // Tier 4 (waves 7+): spiral + 5-way spread + homing burst
-        else {
-          // 5-way aimed
-          for (let i = -2; i <= 2; i++) {
-            fire(angToTarget + i * 0.22, 1.4, 1.3);
-          }
-          // Rotating spiral: 12 shots
-          const spiralStep = (Math.PI * 2) / 12;
-          for (let i = 0; i < 12; i++) {
-            fire(this.spiralAngle + spiralStep * i, 1.1, 0.8);
-          }
-          this.spiralAngle += 0.52;
+          this.spiralAngle += 0.45;
         }
       } else {
         fire(angToTarget);

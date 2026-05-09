@@ -110,7 +110,9 @@ export class WaveManager {
     }
     if (this.state === 'boss' && this.enemies.countAlive() === 0) {
       this.state = 'cleared';
-      this.events.onWaveCleared(this.wave);
+      this.scene.time.delayedCall(3500, () => {
+        this.events.onWaveCleared(this.wave);
+      });
     }
   }
 
