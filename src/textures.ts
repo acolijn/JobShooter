@@ -3,6 +3,10 @@ import Phaser from 'phaser';
 export const TEX = {
   player: 'tex_player',
   enemy: 'tex_enemy',
+  enemyRunner: 'tex_enemy_runner',
+  enemyTank: 'tex_enemy_tank',
+  enemyShooter: 'tex_enemy_shooter',
+  enemyBoss: 'tex_enemy_boss',
   bullet: 'tex_bullet',
   laser: 'tex_laser',
   plasma: 'tex_plasma',
@@ -15,6 +19,10 @@ export const TEX = {
 export function generateTextures(scene: Phaser.Scene): void {
   makePlayer(scene);
   makeEnemy(scene);
+  makeEnemyRunner(scene);
+  makeEnemyTank(scene);
+  makeEnemyShooter(scene);
+  makeEnemyBoss(scene);
   makeBullet(scene, TEX.bullet, 0x9ef7ff, 4, 14);
   makeBullet(scene, TEX.laser, 0x66ff88, 3, 22);
   makePlasma(scene);
@@ -65,6 +73,81 @@ function makeBullet(scene: Phaser.Scene, key: string, color: number, w: number, 
   g.fillStyle(color, 1);
   g.fillRoundedRect(0, 0, w, h, Math.min(w, h) / 2);
   g.generateTexture(key, w, h);
+  g.destroy();
+}
+
+function makeEnemyRunner(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TEX.enemyRunner)) return;
+  const g = scene.add.graphics();
+  g.fillStyle(0xff66aa, 1);
+  g.fillTriangle(14, 0, 0, 24, 28, 24);
+  g.fillStyle(0xffffff, 1);
+  g.fillCircle(10, 14, 2);
+  g.fillCircle(18, 14, 2);
+  g.generateTexture(TEX.enemyRunner, 28, 28);
+  g.destroy();
+}
+
+function makeEnemyTank(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TEX.enemyTank)) return;
+  const g = scene.add.graphics();
+  g.fillStyle(0x447733, 1);
+  g.fillRect(0, 0, 48, 48);
+  g.lineStyle(3, 0x88ff88, 1);
+  g.strokeRect(2, 2, 44, 44);
+  g.fillStyle(0x222233, 1);
+  g.fillRect(8, 12, 32, 8);
+  g.fillRect(8, 28, 32, 8);
+  g.fillStyle(0xff4444, 1);
+  g.fillRect(20, 20, 8, 8);
+  g.generateTexture(TEX.enemyTank, 48, 48);
+  g.destroy();
+}
+
+function makeEnemyShooter(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TEX.enemyShooter)) return;
+  const g = scene.add.graphics();
+  g.fillStyle(0x3388dd, 1);
+  g.fillCircle(18, 18, 16);
+  g.fillStyle(0x88ddff, 1);
+  g.fillCircle(18, 18, 10);
+  g.fillStyle(0x000022, 1);
+  g.fillCircle(18, 18, 5);
+  g.fillStyle(0xffaa00, 1);
+  g.fillRect(16, 0, 4, 8);
+  g.fillRect(16, 28, 4, 8);
+  g.generateTexture(TEX.enemyShooter, 36, 36);
+  g.destroy();
+}
+
+function makeEnemyBoss(scene: Phaser.Scene): void {
+  if (scene.textures.exists(TEX.enemyBoss)) return;
+  const g = scene.add.graphics();
+  g.fillStyle(0x661144, 1);
+  g.fillCircle(40, 40, 38);
+  g.fillStyle(0xff3366, 1);
+  g.fillCircle(40, 40, 30);
+  g.fillStyle(0x220011, 1);
+  g.fillCircle(28, 34, 6);
+  g.fillCircle(52, 34, 6);
+  g.fillStyle(0xff8800, 1);
+  g.fillCircle(28, 34, 3);
+  g.fillCircle(52, 34, 3);
+  g.fillStyle(0x111111, 1);
+  g.fillRect(20, 50, 40, 6);
+  g.fillStyle(0xff3366, 1);
+  for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * Math.PI * 2;
+    g.fillTriangle(
+      40 + Math.cos(ang) * 38,
+      40 + Math.sin(ang) * 38,
+      40 + Math.cos(ang + 0.2) * 46,
+      40 + Math.sin(ang + 0.2) * 46,
+      40 + Math.cos(ang - 0.2) * 46,
+      40 + Math.sin(ang - 0.2) * 46,
+    );
+  }
+  g.generateTexture(TEX.enemyBoss, 80, 80);
   g.destroy();
 }
 

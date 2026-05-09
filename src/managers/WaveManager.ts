@@ -1,13 +1,22 @@
 import Phaser from 'phaser';
-import { ENEMY, WAVE } from '../config';
-import { EnemyGroup } from '../entities/Enemy';
+import { WAVE } from '../config';
+import { EnemyGroup, EnemyType } from '../entities/Enemy';
 
-export type WaveState = 'idle' | 'spawning' | 'fighting' | 'cleared';
+export type WaveState =
+  | 'idle'
+  | 'spawning'
+  | 'minions'
+  | 'boss-pending'
+  | 'boss'
+  | 'cleared';
 
 export interface WaveEvents {
   onWaveStart: (wave: number) => void;
   onWaveCleared: (wave: number) => void;
+  onBossSpawn?: (wave: number) => void;
 }
+
+const BOSS_DELAY_MS = 1400;
 
 export class WaveManager {
   private scene: Phaser.Scene;
@@ -15,7 +24,7 @@ export class WaveManager {
   private events: WaveEvents;
   wave = 0;
   state: WaveState = 'idle';
-  private toSpawn = 0;
+  private queue: EnemyType[] = [];
   private spawnTimer?: Phaser.Time.TimerEvent;
 
   constructor(scene: Phaser.Scene, enemies: EnemyGroup, events: WaveEvents) {
@@ -27,7 +36,7 @@ export class WaveManager {
   startNextWave(): void {
     this.wave += 1;
     this.state = 'spawning';
-    this.toSpawn = WAVE.baseCount + WAVE.countPerWave * (this.wave - 1);
+    this.queue = this.composeQueue(this.wave);
     this.events.onWaveStart(this.wave);
     this.spawnTimer?.remove(false);
     this.spawnTimer = this.scene.time.addEvent({
@@ -37,18 +46,35 @@ export class WaveManager {
     });
   }
 
+  private composeQueue(wave: number): EnemyType[] {
+    const list: EnemyType[] = [];
+    const grunts = WAVE.baseCount + WAVE.countPerWave * (wave - 1);
+    const runners = Math.floor(wave / 2);
+    const tanks = Math.floor((wave - 1) / 3);
+    const shooters = Math.floor(wave / 2);
+    for (let i = 0; i < grunts; i++) list.push('grunt');
+    for (let i = 0; i < runners; i++) list.push('runner');
+    for (let i = 0; i < tanks; i++) list.push('tank');
+    for (let i = 0; i < shooters; i++) list.push('shooter');
+    Phaser.Utils.Array.Shuffle(list);
+    return list;
+  }
+
   private spawnOne(): void {
-    if (this.toSpawn <= 0) {
+    if (this.queue.length === 0) {
       this.spawnTimer?.remove(false);
-      this.state = 'fighting';
+      this.state = 'minions';
       return;
     }
-    this.toSpawn -= 1;
+    this.spawnEnemy(this.queue.shift()!);
+  }
+
+  private spawnEnemy(type: EnemyType): void {
     const cam = this.scene.cameras.main;
     const edge = Phaser.Math.Between(0, 3);
     let x = 0;
     let y = 0;
-    const margin = 30;
+    const margin = 40;
     if (edge === 0) {
       x = Phaser.Math.Between(0, cam.width);
       y = -margin;
@@ -63,20 +89,26 @@ export class WaveManager {
       y = Phaser.Math.Between(0, cam.height);
     }
 
-    const hp = ENEMY.baseHp + WAVE.hpPerWave * (this.wave - 1);
-    const speed = ENEMY.baseSpeed + WAVE.speedPerWave * (this.wave - 1);
-    this.enemies.spawnAt({
-      x,
-      y,
-      hp,
-      speed,
-      damage: ENEMY.baseDamage,
-      coinValue: ENEMY.coinDrop,
-    });
+    const wf = this.wave - 1;
+    const hpMul = type === 'boss' ? 1 + 0.35 * wf : 1 + 0.18 * wf;
+    const speedAdd = WAVE.speedPerWave * wf;
+    const damageMul = 1 + 0.08 * wf;
+    const coinMul = 1 + 0.1 * wf;
+    this.enemies.spawnAt({ x, y, type, hpMul, speedAdd, damageMul, coinMul });
   }
 
   update(): void {
-    if (this.state === 'fighting' && this.toSpawn <= 0 && this.enemies.countAlive() === 0) {
+    if (this.state === 'minions' && this.enemies.countAlive() === 0) {
+      this.state = 'boss-pending';
+      this.events.onBossSpawn?.(this.wave);
+      this.scene.time.delayedCall(BOSS_DELAY_MS, () => {
+        if (this.state !== 'boss-pending') return;
+        this.spawnEnemy('boss');
+        this.state = 'boss';
+      });
+      return;
+    }
+    if (this.state === 'boss' && this.enemies.countAlive() === 0) {
       this.state = 'cleared';
       this.events.onWaveCleared(this.wave);
     }
@@ -85,7 +117,7 @@ export class WaveManager {
   reset(): void {
     this.wave = 0;
     this.state = 'idle';
-    this.toSpawn = 0;
+    this.queue = [];
     this.spawnTimer?.remove(false);
   }
 }

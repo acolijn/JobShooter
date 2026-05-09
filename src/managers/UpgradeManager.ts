@@ -8,6 +8,7 @@ export interface Upgrade {
   name: string;
   description: string;
   kind: UpgradeKind;
+  cost: number;
   apply: (stats: PlayerStats) => void;
   available?: (stats: PlayerStats) => boolean;
 }
@@ -18,6 +19,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Sharper Rounds',
     description: '+25% bullet damage',
     kind: 'stat',
+    cost: 8,
     apply: (s) => {
       s.bulletDamage = Math.round(s.bulletDamage * 1.25);
     },
@@ -27,6 +29,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Rapid Fire',
     description: '-15% fire interval',
     kind: 'stat',
+    cost: 10,
     apply: (s) => {
       s.fireRateMs = Math.max(60, Math.round(s.fireRateMs * 0.85));
     },
@@ -36,6 +39,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Booster Thrusters',
     description: '+15% move speed',
     kind: 'stat',
+    cost: 6,
     apply: (s) => {
       s.speed = Math.round(s.speed * 1.15);
     },
@@ -45,6 +49,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Reinforced Hull',
     description: '+25 max HP, full heal',
     kind: 'stat',
+    cost: 8,
     apply: (s) => {
       s.maxHp += 25;
       s.hp = s.maxHp;
@@ -55,6 +60,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Multi-Shot',
     description: '+1 projectile per shot',
     kind: 'stat',
+    cost: 18,
     apply: (s) => {
       s.bulletCount += 1;
     },
@@ -64,6 +70,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Piercing Rounds',
     description: '+1 enemy pierce',
     kind: 'stat',
+    cost: 14,
     apply: (s) => {
       s.pierce += 1;
     },
@@ -73,6 +80,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Hyper Velocity',
     description: '+25% projectile speed',
     kind: 'stat',
+    cost: 6,
     apply: (s) => {
       s.bulletSpeed = Math.round(s.bulletSpeed * 1.25);
     },
@@ -82,6 +90,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Nano Repair',
     description: '+1 HP/sec regen',
     kind: 'stat',
+    cost: 12,
     apply: (s) => {
       s.regenPerSec += 1;
     },
@@ -91,6 +100,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Magnet Greed',
     description: '+50% coin gain',
     kind: 'stat',
+    cost: 10,
     apply: (s) => {
       s.coinMultiplier += 0.5;
     },
@@ -100,6 +110,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Focused Spread',
     description: '-30% spread angle',
     kind: 'stat',
+    cost: 6,
     apply: (s) => {
       s.bulletSpread = Math.max(0.04, s.bulletSpread * 0.7);
     },
@@ -109,6 +120,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Kinetic Shield',
     description: '+50 max HP, +0.5 HP/s regen',
     kind: 'stat',
+    cost: 16,
     apply: (s) => {
       s.maxHp += 50;
       s.hp = Math.min(s.maxHp, s.hp + 50);
@@ -120,6 +132,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Overcharge',
     description: '+40% damage, +10% fire interval',
     kind: 'stat',
+    cost: 12,
     apply: (s) => {
       s.bulletDamage = Math.round(s.bulletDamage * 1.4);
       s.fireRateMs = Math.round(s.fireRateMs * 1.1);
@@ -128,8 +141,9 @@ export const ALL_UPGRADES: Upgrade[] = [
   {
     id: 'weapon-laser',
     name: 'Laser Cannon',
-    description: 'Unlock laser: fast, piercing, lower damage. Switch with 1/2/3',
+    description: 'Unlock laser: fast, piercing, lower damage. Switch with 1-4',
     kind: 'weapon',
+    cost: 25,
     available: (s) => !s.ownedWeapons.includes('laser'),
     apply: (s) => {
       if (!s.ownedWeapons.includes('laser')) s.ownedWeapons.push('laser');
@@ -141,6 +155,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Plasma Lance',
     description: 'Unlock plasma: slow heavy bolts, high damage. Switch with 1-4',
     kind: 'weapon',
+    cost: 30,
     available: (s) => !s.ownedWeapons.includes('plasma'),
     apply: (s) => {
       if (!s.ownedWeapons.includes('plasma')) s.ownedWeapons.push('plasma');
@@ -152,6 +167,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Seeker Missiles',
     description: 'Unlock homing missiles. Auto-track nearest enemy',
     kind: 'weapon',
+    cost: 35,
     available: (s) => !s.ownedWeapons.includes('seeker'),
     apply: (s) => {
       if (!s.ownedWeapons.includes('seeker')) s.ownedWeapons.push('seeker');
@@ -163,6 +179,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Bomb Bay',
     description: 'Auto-launch AOE bombs every few seconds',
     kind: 'bomb',
+    cost: 30,
     available: (s) => !s.bombEnabled,
     apply: (s) => {
       s.bombEnabled = true;
@@ -173,6 +190,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Heavy Ordnance',
     description: '+50% bomb damage',
     kind: 'bomb',
+    cost: 14,
     available: (s) => s.bombEnabled,
     apply: (s) => {
       s.bombDamage = Math.round(s.bombDamage * 1.5);
@@ -183,6 +201,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Cluster Charge',
     description: '+30% bomb radius',
     kind: 'bomb',
+    cost: 12,
     available: (s) => s.bombEnabled,
     apply: (s) => {
       s.bombRadius = Math.round(s.bombRadius * 1.3);
@@ -193,6 +212,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Quick Fuse',
     description: '-25% bomb cooldown',
     kind: 'bomb',
+    cost: 14,
     available: (s) => s.bombEnabled,
     apply: (s) => {
       s.bombCooldownMs = Math.max(800, Math.round(s.bombCooldownMs * 0.75));
@@ -203,6 +223,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     name: 'Long Fuse',
     description: '+50% bomb travel time',
     kind: 'bomb',
+    cost: 8,
     available: (s) => s.bombEnabled,
     apply: (s) => {
       s.bombFuseMs = Math.round(s.bombFuseMs * 1.5);

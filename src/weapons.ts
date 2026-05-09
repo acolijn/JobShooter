@@ -44,7 +44,7 @@ export const WEAPON_PROFILES: Record<WeaponType, WeaponProfile> = {
   plasma: {
     texKey: TEX.plasma,
     speedMul: 0.55,
-    damageMul: 2.2,
+    damageMul: 1.85,
     pierceBonus: 0,
     fireRateMul: 1.4,
     spreadMul: 0.6,
@@ -55,17 +55,17 @@ export const WEAPON_PROFILES: Record<WeaponType, WeaponProfile> = {
   },
   seeker: {
     texKey: TEX.missile,
-    speedMul: 0.85,
-    damageMul: 1.5,
+    speedMul: 0.7,
+    damageMul: 0.85,
     pierceBonus: 0,
-    fireRateMul: 1.5,
+    fireRateMul: 1.9,
     spreadMul: 0.4,
     scale: 1,
     bodyRadius: 4,
     countDelta: 0,
     label: 'Seeker',
     homing: true,
-    turnRate: 5.5,
+    turnRate: 3.0,
   },
 };
 
