@@ -8,8 +8,9 @@ export interface Score {
 
 const STORAGE_KEY = 'jobshooter_scores_v1';
 const NAME_KEY = 'jobshooter_lastname';
-const API_URL: string =
-  ((import.meta as unknown as { env?: { VITE_SCORES_API?: string } }).env?.VITE_SCORES_API ?? '').trim();
+const API_URL: string = (
+  (import.meta as unknown as { env?: { VITE_SCORES_API?: string } }).env?.VITE_SCORES_API ?? '/api'
+).trim();
 
 export function getLastName(): string {
   try {

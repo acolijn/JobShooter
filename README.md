@@ -73,77 +73,62 @@ src/
     GameScene.ts           main loop, collisions, HUD, boss bar, game-over
     UpgradeScene.ts        between-wave shop with cost + skip
 server/
-  index.mjs                zero-dep Node high-score API
-  Dockerfile               container for the API
-Dockerfile                 multi-stage build → nginx static
-docker-compose.yml         web + scores together
+  index.mjs                zero-dep Node high-score API (port 3001)
+deploy/
+  nginx-snippet.conf       nginx blocks to add to the server config
+install.sh                 build + deploy script
 ```
 
-## Where does the deployed code run?
+## Server installation
 
-The game is **client-side**. `npm run build` outputs static `dist/` (HTML + JS bundle). Any static host serves it; Phaser runs in the browser via Canvas/WebGL. No server runtime required for gameplay.
+Requires: **Node**, **npm**, **pm2** (`npm install -g pm2`), and **nginx** already running on the server.
 
-The optional `server/` API is the only piece that needs Node. It stores high scores in a JSON file (`./data/scores.json` by default).
-
-## Deploy with global high scores
-
-The score API URL is baked into the frontend bundle at build time via `VITE_SCORES_API`. Without it, the game falls back to per-browser `localStorage`. To get a shared leaderboard you need to run **both** the static frontend AND the Node API, with `VITE_SCORES_API` pointing at the API URL.
-
-### Path A — Docker compose on a VPS (simplest)
-
-On a Linux box with Docker installed:
+### 1. Clone the repo on the server
 
 ```bash
-git clone <your repo> jobshooter
-cd jobshooter
-# point the bundle at where your API will be reachable from the player's browser
-echo "VITE_SCORES_API=https://api.your-domain.com" > .env
-docker compose up --build -d
+git clone https://github.com/acolijn/JobShooter /opt/jobshooter
+cd /opt/jobshooter
 ```
 
-`docker-compose.yml` brings up:
+### 2. Add the nginx config
 
-- `web` — nginx serving the built `dist/` on host port `8080`
-- `scores` — Node API on host port `3001`, persisting `data/scores.json` in a named volume
+Open your existing nginx config (e.g. `/etc/nginx/sites-available/default`) and append the contents of [`deploy/nginx-snippet.conf`](deploy/nginx-snippet.conf).
 
-Put a reverse proxy (Caddy / nginx / Traefik) in front to terminate TLS and route:
+Update the `root` directive to the correct path:
 
-- `your-domain.com` → `localhost:8080`
-- `api.your-domain.com` → `localhost:3001`
+```nginx
+root /opt/jobshooter/dist;
+```
 
-The `VITE_SCORES_API` value is the URL the **player's browser** uses to reach the API, not the internal Docker hostname.
+Then reload nginx:
 
-### Path B — static host + small API server
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
 
-Cheaper for a hobby deploy:
+This exposes:
+- Port **5175** — game (static files served directly by nginx)
+- Port **5176** — scores API (proxied from localhost:3001)
 
-1. Frontend on any static host (GitHub Pages, Netlify, Vercel, S3, your shared hosting).
+### 3. Build and start
 
-   ```bash
-   VITE_SCORES_API=https://api.example.com npm run build
-   # upload dist/ contents
-   ```
+From your **local machine**, run:
 
-2. API on a small VPS / Pi / Fly.io / Render free tier.
+```bash
+./install.sh YOUR_SERVER_IP   # e.g. ./install.sh 192.168.1.100
+```
 
-   ```bash
-   PORT=3001 DATA_FILE=./data/scores.json npm run server
-   ```
+This will:
+1. Build the frontend with `VITE_SCORES_API` pointing at `http://YOUR_SERVER_IP:5176`
+2. Copy `dist/` to the server at `/opt/jobshooter/dist`
+3. Start (or restart) the scores API with pm2
 
-   Use systemd / pm2 to keep it alive, and a reverse proxy for HTTPS + CORS (the API already sets permissive CORS headers; tighten in production).
+### 4. Updates
 
-### Path C — static only, no global scores
+Same command:
 
-Skip the API entirely. Scores live in each player's browser via `localStorage`. Just `npm run build` + upload `dist/`.
+```bash
+./install.sh YOUR_SERVER_IP
+```
 
-## Why Docker?
-
-For the **frontend alone**, Docker is overkill — `dist/` is static files. Any web host serves it.
-
-Docker pays off **once you add the score API**, because then you have two services + a persistent volume and `docker compose up` is the cleanest one-liner deploy. The provided files:
-
-- `Dockerfile` — multi-stage Node build → nginx static on `:80`
-- `server/Dockerfile` — Node API on `:3001`, `/data` volume
-- `docker-compose.yml` — both together
-
-So: skip Docker if static-only; use Docker once you want shared high scores.
+pm2 keeps the API running across reboots (`pm2 startup` + `pm2 save` after first install).
